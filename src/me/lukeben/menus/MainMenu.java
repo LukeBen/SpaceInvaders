@@ -2,31 +2,54 @@ package me.lukeben.menus;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.stage.Stage;
-import me.lukeben.entities.*;
-import me.lukeben.entities.types.Enemy;
-import me.lukeben.entities.types.Player;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import me.lukeben.animation.AnimationManager;
+import me.lukeben.overlay.*;
+import me.lukeben.sprites.*;
+import me.lukeben.sprites.types.Enemy;
+import me.lukeben.sprites.types.Player;
 
 
 public class MainMenu extends Application {
 
-    private Pane root = new Pane();
+    private final Pane root = new Pane();
 
-    private Sprite player = new Player().summon(300, 750);
+    public Pane getRoot() {
+        return root;
+    }
 
     private double time = 0;
 
-    private Parent createContent() {
-        root.setPrefSize(600, 800);
+    private static MainMenu instance;
 
-        root.getChildren().add(player);
+    public MainMenu(){
+        super();
+        synchronized(MainMenu.class){
+            if(instance != null) throw new UnsupportedOperationException(
+                    getClass()+" is singleton but constructor called more than once");
+            instance = this;
+        }
+    }
+
+    public static MainMenu getInstance(){
+        return instance;
+    }
+
+    private Sprite player;
+
+    private Parent createContent() {
+        root.setPrefSize(1200, 800);
+        root.setBackground(new Background(new BackgroundImage(SwingFXUtils.toFXImage(AnimationManager.getSprite(4, 1), null), BackgroundRepeat.REPEAT, BackgroundRepeat.REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT)));
+
+        player = new Player().summon(300, 750);
 
         AnimationTimer timer = new AnimationTimer() {
             @Override
@@ -38,6 +61,12 @@ public class MainMenu extends Application {
         timer.start();
 
         nextLevel();
+        new LivesLeftOverlay(1100, 10);
+        new LivesLeftOverlay(1040, 10);
+        new LivesLeftOverlay(980, 10);
+        new CoinsOverlay();
+        new NumberOverlay(NumberEnum.FOUR, 100, 58);
+        new Scoreboard();
 
         return root;
     }
@@ -48,12 +77,13 @@ public class MainMenu extends Application {
     //
 
     private void nextLevel() {
-        for(int x = 0; x < 10; x++) {
+        for(int x = 0; x < 11; x++) {
             for(int y = 0; y < 5; y++) {
-                root.getChildren().add(new Enemy().summon(50 + x*50, 250 - (y * 50)));
-                //Sprite s = new Sprite(50 + x*50, 250 - (y * 50), 35, 35, "enemy", Color.RED);
-
-               // root.getChildren().add(s);
+                if(x == 0 & y == 0) {
+                    new Enemy(x, y).summon(205 + x*72, 250 - (y * 50));
+                } else {
+                    new Enemy(x, y).summon(205 + x*72, 250 - (y * 50));
+                }
             }
         }
     }
@@ -61,10 +91,7 @@ public class MainMenu extends Application {
     private void update() {
         time += 0.016;
 
-
         SpriteManager.getInstance().getSprites().forEach(s -> {
-            System.out.println(SpriteManager.getInstance().getSprites().toString());
-            System.out.println("w?");
             s.update(time);
 
             switch (s.getType()) {
@@ -89,10 +116,11 @@ public class MainMenu extends Application {
             }
         });
 
-        root.getChildren().removeIf(n -> {
-            Sprite s = (Sprite) n;
-            return s.isDead();
-        });
+        SpriteManager.getInstance().getSprites().removeAll(SpriteManager.getInstance().getSpritesToRemove());
+        root.getChildren().removeAll(SpriteManager.getInstance().getSpritesToRemove());
+        SpriteManager.getInstance().getSprites().addAll(SpriteManager.getInstance().getSpritesToAdd());
+        SpriteManager.getInstance().getSpritesToRemove().clear();
+        SpriteManager.getInstance().getSpritesToAdd().clear();
 
         if(time > 2) {
             time = 0;
@@ -134,6 +162,7 @@ public class MainMenu extends Application {
         });
 
         primaryStage.setScene(scene);
+        primaryStage.getIcons().add(SwingFXUtils.toFXImage(AnimationManager.getSprite(0, 0), null));
         primaryStage.show();
     }
 

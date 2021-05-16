@@ -1,4 +1,4 @@
-package me.lukeben.entities;
+package me.lukeben.sprites;
 
 public enum  SpriteType {
 
