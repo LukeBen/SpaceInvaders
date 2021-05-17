@@ -14,7 +14,7 @@ public class EnemyBullet extends Sprite {
 
 
     public EnemyBullet() {
-        super(SpriteType.ENEMY_BULLET, 16, 32, AnimationManager.getSprite(2, 1));
+        super(SpriteType.ENEMY_BULLET, 16, 32, AnimationManager.getSprite(3, 1));
     }
 
     @Override
